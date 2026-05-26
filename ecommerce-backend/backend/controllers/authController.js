@@ -75,15 +75,12 @@ exports.sendOTP = async (req, res) => {
         );
 
         const transporter = nodemailer.createTransport({
-            host: 'mail.spacemail.com',
+            host: 'smtp.gmail.com',
             port: 465,
             secure: true,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
             }
         });
 
@@ -424,4 +421,41 @@ exports.logout = (req, res) => {
     res.status(200).json({
         message: 'Logged out successfully'
     });
+};
+
+exports.updatePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current password and new password are required.' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+        }
+
+        const userId = req.user._id || req.user.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Current password is incorrect.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.status(200).json({ success: true, message: 'Password updated successfully.' });
+
+    } catch (err) {
+        console.error('UpdatePassword Error:', err);
+        res.status(500).json({ error: 'Failed to update password.' });
+    }
 };

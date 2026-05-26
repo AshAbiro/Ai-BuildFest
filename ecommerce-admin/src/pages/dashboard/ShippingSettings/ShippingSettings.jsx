@@ -36,7 +36,7 @@ const ShippingSettings = () => {
         const fetchShopStatus = async () => {
             try {
                 const { data } = await API.get('/admin/settings');
-                if (data.data.pathaoStoreId) {
+                if (data?.pathaoStoreId) {
                     setIsLinked(true);
                 }
             } catch (err) {

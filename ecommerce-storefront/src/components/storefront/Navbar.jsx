@@ -1,8 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag, Search, User, Truck } from 'lucide-react';
+import { ShoppingBag, Search, User, Truck, UserPlus } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
 
 import SearchModal from '@/components/search/SearchModal';
@@ -10,6 +11,8 @@ import API from '@/api/api';
 
 export default function Navbar({ subdomain }) {
     const { cartCount } = useCart();
+    const { user } = useAuth();
+    const isLoggedIn = !!user;
 
     const [searchOpen, setSearchOpen] = useState(false);
     const [products, setProducts] = useState([]);
@@ -98,9 +101,20 @@ export default function Navbar({ subdomain }) {
                         <Link
                             href="/account"
                             className="text-gray-500 hover:text-[var(--sf-accent)] transition transform hover:scale-110"
+                            title={isLoggedIn ? 'My Account' : 'Sign In'}
                         >
                             <User size={22} strokeWidth={2.5} />
                         </Link>
+
+                        {!isLoggedIn && (
+                            <Link
+                                href="/signup"
+                                className="text-gray-500 hover:text-[var(--sf-accent)] transition transform hover:scale-110"
+                                title="Create Account"
+                            >
+                                <UserPlus size={22} strokeWidth={2.5} />
+                            </Link>
+                        )}
 
                         <Link
                             href="/cart"

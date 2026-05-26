@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const adminTransporter = nodemailer.createTransport({
-    host: 'mail.spacemail.com',
+    host: 'smtp.gmail.com',
     port: 465,
     secure: true,
 

@@ -40,6 +40,7 @@ const {
 
 // Store / Pathao Controllers
 const {
+    getStoreInfo,
     setupVendorPathaoStore,
     getCities,
     getZones,
@@ -83,6 +84,13 @@ router.post(
 // PATHAO / STORE SETTINGS
 // ======================================================
 
+router.get(
+    '/settings',
+    protect,
+    authorize('VendorAdmin', 'VendorStaff'),
+    getStoreInfo
+);
+
 router.post(
     '/settings/pathao-link',
     protect,
@@ -125,6 +133,8 @@ router.get(
 
 router.post(
     '/generate-description',
+    protect,
+    authorize('VendorAdmin', 'VendorStaff'),
     generateDescription
 );
 

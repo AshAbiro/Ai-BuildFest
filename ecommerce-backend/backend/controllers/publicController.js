@@ -285,8 +285,7 @@ exports.trackPublicOrder = async (req, res) => {
         }
 
         const order = await Order.findById(orderId)
-            // Optional: Populating product titles/images makes the tracking page look better!
-            .populate('items.product', 'title imageUrl category');
+            .populate('items.productId', 'title images category');
 
         if (!order) {
             return res.status(404).json({ error: "Order not found. Please check your ID." });

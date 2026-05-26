@@ -1,8 +1,12 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Force Google DNS to bypass ISP-level SRV record blocking
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
 const connectDB = async () => {
     try {
-        // We use process.env to keep the database password secret
         const conn = await mongoose.connect(process.env.MONGO_URI);
 
         console.log(`MongoDB Connected: ${conn.connection.host}`);

@@ -20,7 +20,8 @@ export default function PlatformLandingPage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        const sanitized = name === "subdomain" ? value.replace(/[^a-z0-9]/gi, "").toLowerCase() : value;
+        setFormData((prev) => ({ ...prev, [name]: sanitized }));
     };
 
     const handleSendOtp = async (e) => {
@@ -111,9 +112,10 @@ export default function PlatformLandingPage() {
                             <div className="space-y-2">
                                 <label className="text-xs uppercase tracking-widest font-bold text-slate-400 ml-1">Store URL</label>
                                 <div className="relative flex items-center">
-                                    <input name="subdomain" value={formData.subdomain} onChange={handleChange} placeholder="mystore" className={`${inputClass} pr-32`} required />
+                                    <input name="subdomain" value={formData.subdomain} onChange={handleChange} placeholder="mystore" pattern="[a-z0-9]+" title="Only letters and numbers are allowed" className={`${inputClass} pr-32`} required />
                                     <span className="absolute right-5 text-slate-400 font-bold text-sm">.platform.com</span>
                                 </div>
+                                <p className="text-xs text-slate-400 ml-1">Letters and numbers only — no spaces or special characters</p>
                             </div>
 
                             <div className="space-y-2">

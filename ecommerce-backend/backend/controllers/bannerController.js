@@ -5,9 +5,7 @@ exports.createBanner = async (req, res) => {
     try {
         const { title, link } = req.body;
 
-        // 🔹 1. Extract shop ID from the authenticated user
-        // Adjust 'req.user.shopId' to whatever your auth middleware provides!
-        const shop_id = req.user.shopId;
+        const shop_id = req.tenantId;
 
         if (!shop_id) {
             return res.status(401).json({ success: false, message: "Unauthorized: Shop ID missing" });
@@ -42,8 +40,7 @@ exports.createBanner = async (req, res) => {
 // @desc    Get all banners (For Admin Panel Table)
 exports.getAllBanners = async (req, res) => {
     try {
-        // 🔹 2. Only fetch banners belonging to the logged-in admin's shop
-        const shop_id = req.user.shopId;
+        const shop_id = req.tenantId;
 
         const banners = await Banner.find({ shop_id }).sort({ createdAt: -1 });
         res.status(200).json(banners);
@@ -78,9 +75,7 @@ exports.getActiveBanners = async (req, res) => {
 // @desc    Delete banner
 exports.deleteBanner = async (req, res) => {
     try {
-        // 🔹 4. Security Check: Find the banner by BOTH its ID and the Admin's Shop ID
-        // This prevents Admin A from sending a DELETE request with Admin B's banner ID.
-        const shop_id = req.user.shopId;
+        const shop_id = req.tenantId;
 
         const banner = await Banner.findOneAndDelete({ _id: req.params.id, shop_id });
 
@@ -97,8 +92,7 @@ exports.deleteBanner = async (req, res) => {
 // @desc    Toggle banner visibility (Active/Inactive)
 exports.toggleBannerStatus = async (req, res) => {
     try {
-        // 🔹 5. Security Check: Only allow toggling if the banner belongs to the admin
-        const shop_id = req.user.shopId;
+        const shop_id = req.tenantId;
 
         const banner = await Banner.findOne({ _id: req.params.id, shop_id });
 

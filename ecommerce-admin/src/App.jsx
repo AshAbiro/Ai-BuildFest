@@ -8,6 +8,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 
 // Pages
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Overview from './pages/dashboard/Overview';
 import ProductList from './pages/dashboard/products/ProductList';
 import AddProduct from './pages/dashboard/products/AddProduct';
@@ -29,6 +30,7 @@ function App() {
             <Routes>
                 {/* Public / Auth Routes */}
                 <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+                <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
 
                 {/* Protected Dashboard Routes */}
                 <Route path="/dashboard" element={user ? <DashboardLayout /> : <Navigate to="/login" />}>

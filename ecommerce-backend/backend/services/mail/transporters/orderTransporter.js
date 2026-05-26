@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const orderTransporter = nodemailer.createTransport({
-    host: 'mail.spacemail.com',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false, // Must be false for 587
     auth: {

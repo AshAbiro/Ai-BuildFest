@@ -10,24 +10,18 @@ export default function middleware(req) {
     const url = req.nextUrl;
     const hostname = req.headers.get('host') || '';
 
-    // 🌟 Safely extract the subdomain for BOTH Local and Production 🌟
-    // 🌟 Safely extract the subdomain for BOTH Local and Production 🌟
+    // Extract subdomain for both local (any port) and production environments
     let subdomain = hostname
-        .replace('.scaleup.codes', '') // Removes production domain
-        .replace('scaleup.codes', '')  // Failsafe for root production domain
-        .replace('.localhost:3000', '') // Removes local domain
-        .replace('localhost:3000', ''); // Failsafe for root local domain
+        .replace(/\.scaleup\.codes(:\d+)?$/, '')   // Remove production domain
+        .replace(/^scaleup\.codes(:\d+)?$/, '')     // Failsafe for root production
+        .replace(/\.localhost(:\d+)?$/, '')          // Remove any local subdomain suffix
+        .replace(/^localhost(:\d+)?$/, '');          // Failsafe for bare localhost
 
-    // 🛑 Bypass for your main platform pages
-
-    // 🛑 Bypass for your main platform pages
-    // If the hostname is empty, 'www', or your main 'shop' frontend, render normally.
-    if (subdomain === '' || subdomain === 'www' || subdomain === 'shop' || subdomain === 'admin') {
+    // Bypass for main platform root / known non-tenant hostnames
+    if (!subdomain || subdomain === 'www' || subdomain === 'shop' || subdomain === 'admin') {
         return NextResponse.next();
     }
 
-    // ✨ The Magic Rewrite
-    // example: user visits 'nike.scaleup.codes/cart'
-    // Next.js secretly loads the code from '/app/nike/cart' (or pages/nike/cart)
+    // Rewrite: nike.localhost:3000/cart → /nike/cart internally
     return NextResponse.rewrite(new URL(`/${subdomain}${url.pathname}`, req.url));
 }

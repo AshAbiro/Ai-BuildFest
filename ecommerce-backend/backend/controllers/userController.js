@@ -11,7 +11,7 @@ const { createUserSchema, loginUserSchema } = require('../validations/userValida
 exports.toggleCustomerStatus = async (req, res) => {
     try {
         const customerId = req.params.id;
-        const shopId = req.user.shop_id || req.user.shopId;
+        const shopId = req.tenantId;
 
         // 1. Find the user, ensuring they belong to THIS vendor's shop
         const customer = await User.findOne({
@@ -48,7 +48,7 @@ exports.getShopCustomers = async (req, res) => {
     try {
         // Find users linked to this specific shop with the 'Customer' role
         const customers = await User.find({
-            shop_id: req.user.shopId,
+            shop_id: req.tenantId,
             role: 'Customer'
         })
             .select('-password') // Never send passwords to the frontend!
@@ -74,7 +74,7 @@ exports.createShopUser = async (req, res) => {
         if (existingUser) return res.status(400).json({ error: "Email already registered" });
 
         // Pull shop_id from the authenticated vendor's token (req.user)
-        const currentShopId = req.user.shopId;
+        const currentShopId = req.tenantId;
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(value.password, salt);
@@ -100,7 +100,7 @@ exports.createShopUser = async (req, res) => {
  */
 exports.getShopUsers = async (req, res) => {
     try {
-        const users = await User.find({ shop_id: req.user.shopId })
+        const users = await User.find({ shop_id: req.tenantId })
             .select('-password')
             .sort({ createdAt: -1 });
 

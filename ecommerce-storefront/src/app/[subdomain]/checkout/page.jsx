@@ -24,14 +24,18 @@ import { toast } from "react-hot-toast";
 import API from "@/api/api";
 
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CheckoutPage({ params }) {
 
     const { subdomain } = React.use(params);
 
     // =========================================
-    // CART
+    // AUTH + CART
     // =========================================
+    const { user } = useAuth();
+    const isLoggedIn = !!user;
+
     const {
         cartItems,
         cartTotal,
@@ -136,7 +140,6 @@ export default function CheckoutPage({ params }) {
     // PLACE ORDER
     // =========================================
     const handlePlaceOrder = async (e) => {
-
         e.preventDefault();
 
         if (cartItems.length === 0) {
@@ -147,156 +150,84 @@ export default function CheckoutPage({ params }) {
         setLoading(true);
 
         try {
-
-            const token =
-                localStorage.getItem(
-                    "shopforall_token"
-                );
-
             let savedOrderData;
 
-            // =====================================
-            // LOGGED IN USER
-            // =====================================
-            if (token) {
-
+            if (isLoggedIn) {
+                // ── Authenticated order (cookie is sent automatically) ──────
                 const securePayload = {
-
                     items: cartItems.map((item) => {
-
                         const selectedVariantId =
                             item.variantId ||
-                            item.variants?.find(
-                                (variant) =>
-                                    variant.isActive
-                            )?._id ||
+                            item.selectedVariant?._id ||
+                            item.variants?.find((v) => v.isActive)?._id ||
                             item.variants?.[0]?._id;
 
                         if (!selectedVariantId) {
-
-                            throw new Error(
-                                `No variant found for ${item.title}`
-                            );
+                            throw new Error(`No variant found for "${item.title}". Please re-add it to cart.`);
                         }
 
                         return {
                             productId: item._id,
-                            variantId:
-                            selectedVariantId,
+                            variantId: selectedVariantId,
                             quantity: item.quantity,
                         };
                     }),
-
                     shipping: {
-
-                        zone: isDhaka
-                            ? "Inside Dhaka"
-                            : "Outside Dhaka",
-
+                        zone: isDhaka ? "Inside Dhaka" : "Outside Dhaka",
                         address: {
-                            fullName:
-                            formData.fullName,
-                            phone:
-                            formData.phone,
-                            addressLine:
-                            formData.address,
-                            city:
-                            formData.city,
+                            fullName: formData.fullName,
+                            phone: formData.phone,
+                            addressLine: formData.address,
+                            city: formData.city,
                         },
                     },
-
-                    payment: {
-                        method: "COD",
-                    },
+                    payment: { method: "COD" },
                 };
 
-                const response =
-                    await API.post(
-                        `/storefront/${subdomain}/orders`,
-                        securePayload,
-                        {
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`,
-                            },
-                        }
-                    );
+                const response = await API.post(
+                    `/storefront/${subdomain}/orders`,
+                    securePayload
+                );
 
-                savedOrderData = {
-                    _id: response.data.orderId,
-                };
+                savedOrderData = { _id: response.data.orderId || response.data._id };
 
             } else {
-
-                // =====================================
-                // GUEST USER
-                // =====================================
+                // ── Guest order ──────────────────────────────────────────────
                 const guestPayload = {
-
                     subdomain,
-
                     customer: {
-                        fullName:
-                        formData.fullName,
-                        email:
-                        formData.email,
-                        phone:
-                        formData.phone,
+                        fullName: formData.fullName,
+                        email: formData.email,
+                        phone: formData.phone,
                     },
-
-                    shippingAddress:
-                        `${formData.address}, ${formData.city}`,
-
-                    shippingZone: isDhaka
-                        ? "Inside Dhaka"
-                        : "Outside Dhaka",
-
+                    shippingAddress: `${formData.address}, ${formData.city}`,
+                    shippingZone: isDhaka ? "Inside Dhaka" : "Outside Dhaka",
                     items: cartItems.map((item) => ({
-                        product: item._id,
+                        productId: item._id,
                         quantity: item.quantity,
-                        price:
-                            item.finalPrice ||
-                            item.sellingPrice,
+                        ...(item.variantId ? { variantId: item.variantId } : {}),
                     })),
-
                     shippingCost,
-
                     totalAmount,
                 };
 
-                const response =
-                    await API.post(
-                        "/public/orders",
-                        guestPayload
-                    );
-
-                savedOrderData =
-                    response.data;
+                const response = await API.post("/public/orders", guestPayload);
+                savedOrderData = response.data;
             }
 
             setOrderId(savedOrderData._id);
-
             setIsSuccess(true);
-
             clearCart();
-
-            toast.success(
-                "Order placed successfully"
-            );
+            toast.success("Order placed successfully!");
 
         } catch (error) {
-
-            console.log("FULL ERROR:", error);
-
             toast.error(
                 error.response?.data?.error ||
                 error.response?.data?.message ||
                 error.message ||
-                "Failed to place order"
+                "Failed to place order. Please try again."
             );
-
         } finally {
-
             setLoading(false);
         }
     };

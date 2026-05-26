@@ -17,7 +17,8 @@ const {
     login,
     logout,
     getMe,
-    sendOTP
+    sendOTP,
+    updatePassword
 } = require('../controllers/authController');
 
 // ======================================================
@@ -59,6 +60,13 @@ router.get(
     '/me',
     protect,
     getMe
+);
+
+// Update Password
+router.put(
+    '/update-password',
+    protect,
+    updatePassword
 );
 
 // =========================

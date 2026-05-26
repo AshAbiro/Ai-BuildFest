@@ -42,7 +42,7 @@ const LoginForm = () => {
                 id="email"
                 label="Email Address"
                 type="email"
-                placeholder="vendor@scaleup.com"
+                placeholder="vendor@scaleup.codes"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

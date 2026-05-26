@@ -91,7 +91,7 @@ const pathaoSetupSchema = Joi.object({
     address: Joi.string().min(10).max(120).required(),
     city_id: Joi.alternatives().try(Joi.number(), Joi.string()).required(),
     zone_id: Joi.alternatives().try(Joi.number(), Joi.string()).required(),
-    area_id: Joi.alternatives().try(Joi.number(), Joi.string()).required()
+    area_id: Joi.alternatives().try(Joi.number(), Joi.string()).optional().allow('', null)
 });
 
 exports.setupVendorPathaoStore = async (req, res) => {
@@ -117,7 +117,7 @@ exports.setupVendorPathaoStore = async (req, res) => {
             address: value.address,
             city_id: parseInt(value.city_id, 10),
             zone_id: parseInt(value.zone_id, 10),
-            area_id: parseInt(value.area_id, 10)
+            ...(value.area_id ? { area_id: parseInt(value.area_id, 10) } : {})
         };
 
         await createPathaoStore(token, storePayload);
@@ -126,7 +126,7 @@ exports.setupVendorPathaoStore = async (req, res) => {
         const storesList = storesResponse?.data?.data || storesResponse?.data || [];
 
         const newStore = storesList.find(
-            s => s.contact_number === storePayload.contact_number && s.store_name === storePayload.name
+            s => s?.contact_number === storePayload.contact_number && s?.store_name === storePayload.name
         );
 
         if (!newStore || !newStore.store_id) {

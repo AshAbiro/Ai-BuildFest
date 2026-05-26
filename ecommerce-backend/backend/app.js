@@ -20,7 +20,9 @@ const app = express();
 app.set('trust proxy', 1);
 connectDB();
 
-const allowedOrigins = process.env.CORS_ORIGINS.split(',');
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+    : [];
 
 app.use(express.json());
 app.use(cookieParser());
