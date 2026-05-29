@@ -30,38 +30,24 @@ const getCookieOptions = () => {
     const isProduction = process.env.NODE_ENV === "production";
 
     return {
-        // Prevents client-side scripts from accessing the cookie (XSS protection)
         httpOnly: true,
-
-        // Must be true in production because SameSite: 'none' requires HTTPS
-        // In local dev, this is usually false unless you use an SSL proxy
         secure: isProduction,
-
-        // 'none' is required for cross-site (Vercel domain vs Railway domain)
-        // 'lax' is better once you move both to subdomains of the same root domain
-        sameSite: 'lax',
-        // CHIPS (Cookies Having Independent Partitioned State)
-        // This helps the cookie work in Incognito/Third-party contexts in modern browsers
+        // Must be 'none' to allow cross-origin cookies between vercel.app subdomains
+        sameSite: isProduction ? 'none' : 'lax',
         partitioned: isProduction,
-
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-
         path: '/',
-
-        /*
-           UNCOMMENT THIS once your frontend is shop.scaleup.codes
-           and backend is api.scaleup.codes.
-           The dot prefix allows the cookie to be shared across all subdomains.
-        */
-        domain: isProduction ? '.scaleup.codes' : undefined,
+        // Do not set domain. If unset, it defaults to the backend's domain which is correct.
     };
 };
 exports.sendOTP = async (req, res) => {
     try {
+        console.log('Backend OTP Started for:', req.body.email);
         const { email } = req.body;
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+        console.log('Updating OTP in DB...');
         await OTP.findOneAndUpdate(
             { email },
             {
@@ -73,11 +59,15 @@ exports.sendOTP = async (req, res) => {
                 new: true
             }
         );
+        console.log('OTP updated in DB. Connecting to SMTP...');
 
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             port: 465,
             secure: true,
+            connectionTimeout: 5000,
+            greetingTimeout: 5000,
+            socketTimeout: 5000,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
@@ -99,6 +89,7 @@ exports.sendOTP = async (req, res) => {
                 </div>
             `
         });
+        console.log('OTP email sent via SMTP successfully.');
 
         res.status(200).json({
             success: true,
@@ -193,6 +184,7 @@ exports.registerVendor = async (req, res) => {
 
         res.status(201).json({
             message: 'Shop and Vendor account created successfully',
+            token,
             user: {
                 id: newAdmin._id,
                 fullName: newAdmin.fullName,
@@ -281,11 +273,12 @@ exports.registerCustomer = async (req, res) => {
         res.cookie('token', token, getCookieOptions());
 
         res.status(201).json({
-            success: true,
+            message: 'Customer account created successfully',
+            token,
             user: {
                 id: newCustomer._id,
                 fullName: newCustomer.fullName,
-                role: newCustomer.role
+                shopId: newCustomer.shop_id
             }
         });
 
@@ -407,14 +400,15 @@ exports.getMe = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
+    const isProduction = process.env.NODE_ENV === 'production';
     const cookieOptions = {
         httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        partitioned: isProduction,
+        path: '/',
         expires: new Date(0)
     };
-
-    if (process.env.NODE_ENV === 'production') {
-        cookieOptions.domain = '.scaleup.codes';
-    }
 
     res.cookie('token', 'none', cookieOptions);
 
