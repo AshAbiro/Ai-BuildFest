@@ -21,6 +21,9 @@ const LoginForm = () => {
 
         try {
             const res = await API.post('/auth/login', { email, password });
+            if (res.data.token) {
+                localStorage.setItem('token', res.data.token);
+            }
             setUser(res.data.user);
             navigate('/dashboard'); // Redirect after successful login
         } catch (err) {

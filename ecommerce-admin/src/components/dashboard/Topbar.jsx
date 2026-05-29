@@ -6,11 +6,16 @@ const Topbar = ({ onOpenMenu }) => {
 
     const subdomain = user?.shop?.subdomain || user?.subdomain || 'demo';
 
-    let baseDomain = import.meta.env.VITE_API_DOMAIN ;
+    let baseDomain = import.meta.env.VITE_API_DOMAIN || 'localhost:3000';
     baseDomain = baseDomain.replace(/^https?:\/\//, '');
 
     const protocol = baseDomain.includes('localhost') ? 'http://' : 'https://';
-    const liveStoreUrl = `${protocol}${subdomain}.${baseDomain}`;
+    
+    // For Vercel free tier (which doesn't support wildcard subdomains)
+    let liveStoreUrl = `${protocol}${subdomain}.${baseDomain}`;
+    if (baseDomain.includes('vercel.app')) {
+        liveStoreUrl = `${protocol}${baseDomain}?shop=${subdomain}`;
+    }
 
     return (
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">
