@@ -52,6 +52,12 @@ app.use(
             }
 
             if (
+                /^https?:\/\/([a-z0-9-\.]+)\.vercel\.app$/.test(origin)
+            ) {
+                return callback(null, true);
+            }
+
+            if (
                 // ✨ FIX: Added '\.' inside the brackets to allow 'www.'
                 /^https?:\/\/([a-z0-9-\.]+)\.scaleup\.codes$/.test(origin)
             ) {
